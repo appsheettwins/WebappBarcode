@@ -3,113 +3,162 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Barcode Scanner WebApp</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <title>Smart Scanner Pro</title>
+    <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/html5-qrcode"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <style>
-        #reader { width: 100%; max-width: 500px; margin: auto; }
+        @import url('https://fonts.googleapis.com/css2?family=Kanit:wght@300;400;500&display=swap');
+        body { font-family: 'Kanit', sans-serif; background-color: #f8fafc; }
+        .glass-card { background: rgba(255, 255, 255, 0.95); backdrop-filter: blur(10px); border-radius: 1.5rem; }
+        .scanner-box { border-radius: 1rem; overflow: hidden; border: 4px solid #3b82f6; }
         .hidden { display: none; }
-        #preview { width: 100px; height: 100px; object-fit: cover; border: 1px solid #ccc; }
     </style>
 </head>
-<body class="bg-light">
+<body class="min-h-screen pb-20">
 
-<div class="container py-4">
-    <h2 class="text-center mb-4">ระบบจัดการข้อมูลบาร์โค้ด</h2>
-    
-    <div class="d-flex justify-content-center mb-4">
-        <button class="btn btn-primary me-2" onclick="showPage('scan-page')">สแกน/ค้นหา</button>
-        <button class="btn btn-success" onclick="showPage('add-page')">เพิ่มข้อมูลใหม่</button>
+    <nav class="bg-blue-600 text-white p-4 shadow-lg sticky top-0 z-50">
+        <div class="container mx-auto flex justify-between items-center">
+            <h1 class="text-xl font-bold"><i class="fas fa-qrcode mr-2"></i> SmartScan</h1>
+            <div id="status-dot" class="h-3 w-3 bg-green-400 rounded-full animate-pulse"></div>
+        </div>
+    </nav>
+
+    <div class="container mx-auto p-4 max-w-lg">
+        
+        <div class="flex bg-gray-200 p-1 rounded-xl mb-6 shadow-inner">
+            <button onclick="switchTab('scan')" id="btn-scan" class="flex-1 py-2 rounded-lg font-medium transition-all bg-white shadow-sm text-blue-600">สแกนข้อมูล</button>
+            <button onclick="switchTab('add')" id="btn-add" class="flex-1 py-2 rounded-lg font-medium transition-all text-gray-500">ลงทะเบียน</button>
+        </div>
+
+        <div id="tab-scan" class="space-y-4">
+            <div class="glass-card p-4 shadow-xl border border-gray-100">
+                <div class="scanner-box" id="reader"></div>
+                <div class="mt-4">
+                    <label class="text-sm text-gray-500 px-1">เลขบาร์โค้ด / รหัสประจำตัว</label>
+                    <div class="flex gap-2">
+                        <input type="text" id="scan-input" class="w-full p-3 rounded-xl border border-gray-300 focus:ring-2 focus:ring-blue-500 outline-none" placeholder="แสกนหรือพิมพ์ที่นี่...">
+                        <button onclick="searchData()" class="bg-blue-600 text-white px-6 rounded-xl hover:bg-blue-700 transition">ค้นหา</button>
+                    </div>
+                </div>
+            </div>
+            
+            <div id="result-card" class="glass-card p-6 shadow-xl border border-blue-100 hidden animate-bottom">
+                </div>
+        </div>
+
+        <div id="tab-add" class="hidden animate-fade">
+            <form id="reg-form" class="glass-card p-6 shadow-xl border border-gray-100 space-y-4">
+                <h3 class="text-lg font-bold text-gray-700 mb-2">บันทึกข้อมูลใหม่</h3>
+                <input type="text" id="reg-id" class="w-full p-3 rounded-xl border border-gray-200" placeholder="รหัสบาร์โค้ด" required>
+                <div class="grid grid-cols-2 gap-3">
+                    <input type="text" id="reg-name" class="w-full p-3 rounded-xl border border-gray-200" placeholder="ชื่อ" required>
+                    <input type="text" id="reg-surname" class="w-full p-3 rounded-xl border border-gray-200" placeholder="นามสกุล" required>
+                </div>
+                <input type="text" id="reg-idcard" class="w-full p-3 rounded-xl border border-gray-200" placeholder="เลขบัตรประชาชน 13 หลัก" required>
+                
+                <div class="border-2 border-dashed border-gray-300 rounded-xl p-4 text-center hover:border-blue-500 transition cursor-pointer" onclick="document.getElementById('reg-image').click()">
+                    <i class="fas fa-camera text-3xl text-gray-400 mb-2"></i>
+                    <p class="text-sm text-gray-500">คลิกเพื่อถ่ายรูปหรือแนบไฟล์</p>
+                    <input type="file" id="reg-image" class="hidden" accept="image/*" onchange="handleImage(event)">
+                    <img id="img-preview" class="mt-3 w-full rounded-lg hidden shadow-md">
+                </div>
+                
+                <button type="submit" class="w-full bg-green-500 text-white py-4 rounded-xl font-bold text-lg shadow-lg hover:bg-green-600 transition">
+                    <i class="fas fa-save mr-2"></i> บันทึกข้อมูล
+                </button>
+            </form>
+        </div>
+
     </div>
 
-    <div id="scan-page" class="card p-3 shadow-sm">
-        <h4>แสกนหรือกรอกบาร์โค้ด</h4>
-        <div id="reader"></div>
-        <input type="text" id="manual-id" class="form-control mt-3" placeholder="หรือพิมพ์เลขที่นี่...">
-        <button class="btn btn-info mt-2 w-100" onclick="searchData()">ค้นหาข้อมูล</button>
-        <div id="result-display" class="mt-3 p-3 border rounded hidden"></div>
-    </div>
+    <script>
+        const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzPin5zv73cFcam05AluOfvTm_HA43Bd5EYTkT6ZUFGobGL2qiXun0VUSgFVvcH844q/exec";
+        let scanner = new Html5Qrcode("reader");
+        let base64Image = "";
 
-    <div id="add-page" class="card p-3 shadow-sm hidden">
-        <h4>ลงทะเบียนใหม่</h4>
-        <form id="add-form">
-            <input type="text" id="new-id" class="form-control mb-2" placeholder="เลขบาร์โค้ด (แสกนเพื่อกรอก)" required>
-            <input type="text" id="new-name" class="form-control mb-2" placeholder="ชื่อ" required>
-            <input type="text" id="new-surname" class="form-control mb-2" placeholder="นามสกุล" required>
-            <input type="text" id="new-idcard" class="form-control mb-2" placeholder="เลขบัตรประชาชน" required>
-            <label>รูปภาพ:</label>
-            <input type="file" id="new-image" class="form-control mb-2" accept="image/*" onchange="previewImage(event)">
-            <img id="preview" class="mb-2 hidden">
-            <button type="submit" class="btn btn-success w-100">บันทึกลง Google Sheet</button>
-        </form>
-    </div>
-</div>
-
-<script>
-    const scriptURL = 'https://script.google.com/macros/s/AKfycbzPin5zv73cFcam05AluOfvTm_HA43Bd5EYTkT6ZUFGobGL2qiXun0VUSgFVvcH844q/exec';
-    let html5QrCode = new Html5Qrcode("reader");
-
-    // ฟังก์ชันสลับหน้า
-    function showPage(pageId) {
-        document.getElementById('scan-page').classList.toggle('hidden', pageId !== 'scan-page');
-        document.getElementById('add-page').classList.toggle('hidden', pageId !== 'add-page');
-        if(pageId === 'scan-page') startScanner(); else html5QrCode.stop();
-    }
-
-    // เริ่มกล้องสแกน
-    function startScanner() {
-        html5QrCode.start({ facingMode: "environment" }, { fps: 10, qrbox: 250 },
-            (decodedText) => {
-                document.getElementById('manual-id').value = decodedText;
-                document.getElementById('new-id').value = decodedText;
-                searchData(decodedText);
-            }
-        ).catch(err => console.log("Camera error:", err));
-    }
-
-    // ค้นหาข้อมูล
-    async function searchData(id) {
-        const searchId = id || document.getElementById('manual-id').value;
-        const res = await fetch(`${scriptURL}?id=${searchId}`);
-        const data = await res.json();
-        const display = document.getElementById('result-display');
-        display.classList.remove('hidden');
-        if (data) {
-            display.innerHTML = `<strong>พบข้อมูล:</strong> ${data.name} ${data.surname}<br>ID Card: ${data.idCard}<br><img src="${data.image}" width="100">`;
-        } else {
-            display.innerHTML = `<span class="text-danger">ไม่พบข้อมูล</span>`;
+        function switchTab(type) {
+            const isScan = type === 'scan';
+            document.getElementById('tab-scan').classList.toggle('hidden', !isScan);
+            document.getElementById('tab-add').classList.toggle('hidden', isScan);
+            document.getElementById('btn-scan').className = isScan ? "flex-1 py-2 rounded-lg font-medium transition-all bg-white shadow-sm text-blue-600" : "flex-1 py-2 rounded-lg font-medium transition-all text-gray-500";
+            document.getElementById('btn-add').className = !isScan ? "flex-1 py-2 rounded-lg font-medium transition-all bg-white shadow-sm text-green-600" : "flex-1 py-2 rounded-lg font-medium transition-all text-gray-500";
+            if (isScan) startCamera(); else scanner.stop().catch(()=>{});
         }
-    }
 
-    // แปลงรูปเป็น Base64
-    let base64Image = "";
-    function previewImage(event) {
-        const file = event.target.files[0];
-        const reader = new FileReader();
-        reader.onload = () => {
-            base64Image = reader.result;
-            document.getElementById('preview').src = base64Image;
-            document.getElementById('preview').classList.remove('hidden');
+        function startCamera() {
+            scanner.start({ facingMode: "environment" }, { fps: 15, qrbox: 250 }, (text) => {
+                document.getElementById('scan-input').value = text;
+                document.getElementById('reg-id').value = text;
+                searchData(text);
+                Swal.fire({ icon: 'success', title: 'แสกนสำเร็จ!', timer: 1000, showConfirmButton: false });
+            }).catch(() => {});
+        }
+
+        async function searchData(idValue) {
+            const id = idValue || document.getElementById('scan-input').value;
+            if(!id) return;
+            
+            Swal.showLoading();
+            const res = await fetch(`${SCRIPT_URL}?id=${id}`);
+            const data = await res.json();
+            Swal.close();
+
+            const resultCard = document.getElementById('result-card');
+            if (data) {
+                resultCard.classList.remove('hidden');
+                resultCard.innerHTML = `
+                    <div class="flex items-center gap-4 mb-4">
+                        <img src="${data.image || 'https://via.placeholder.com/100'}" class="w-20 h-20 rounded-full border-2 border-blue-500 object-cover">
+                        <div>
+                            <h3 class="text-xl font-bold text-gray-800">${data.name} ${data.surname}</h3>
+                            <p class="text-blue-600">ID: ${id}</p>
+                        </div>
+                    </div>
+                    <p class="text-gray-600"><i class="fas fa-id-card mr-2"></i> บัตรประชาชน: ${data.idCard}</p>
+                `;
+            } else {
+                Swal.fire('ไม่พบข้อมูล', 'รหัสนี้ยังไม่ได้ลงทะเบียน', 'warning');
+            }
+        }
+
+        function handleImage(e) {
+            const file = e.target.files[0];
+            const reader = new FileReader();
+            reader.onload = () => {
+                base64Image = reader.result;
+                const preview = document.getElementById('img-preview');
+                preview.src = base64Image;
+                preview.classList.remove('hidden');
+            };
+            reader.readAsDataURL(file);
+        }
+
+        document.getElementById('reg-form').onsubmit = async (e) => {
+            e.preventDefault();
+            Swal.fire({ title: 'กำลังบันทึก...', allowOutsideClick: false, didOpen: () => Swal.showLoading() });
+
+            const payload = {
+                id: document.getElementById('reg-id').value,
+                name: document.getElementById('reg-name').value,
+                surname: document.getElementById('reg-surname').value,
+                idCard: document.getElementById('reg-idcard').value,
+                image: base64Image
+            };
+
+            try {
+                const res = await fetch(SCRIPT_URL, { method: 'POST', body: JSON.stringify(payload) });
+                const result = await res.json();
+                if(result.status === 'success') {
+                    Swal.fire('สำเร็จ!', 'บันทึกข้อมูลเรียบร้อยแล้ว', 'success').then(() => location.reload());
+                }
+            } catch (err) {
+                Swal.fire('เกิดข้อผิดพลาด', err.toString(), 'error');
+            }
         };
-        reader.readAsDataURL(file);
-    }
 
-    // ส่งข้อมูลบันทึก
-    document.getElementById('add-form').onsubmit = async (e) => {
-        e.preventDefault();
-        const payload = {
-            id: document.getElementById('new-id').value,
-            name: document.getElementById('new-name').value,
-            surname: document.getElementById('new-surname').value,
-            idCard: document.getElementById('new-idcard').value,
-            image: base64Image
-        };
-        const res = await fetch(scriptURL, { method: 'POST', body: JSON.stringify(payload) });
-        const result = await res.json();
-        if(result.result === 'success') { alert('บันทึกสำเร็จ!'); location.reload(); }
-    };
-
-    startScanner();
-</script>
+        window.onload = startCamera;
+    </script>
 </body>
 </html>
