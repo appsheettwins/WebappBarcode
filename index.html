@@ -3,52 +3,47 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Smart Scanner Hybrid Search</title>
+    <title>Smart Search Pro</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/html5-qrcode"></script>
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Kanit:wght@300;400;500&display=swap');
-        body { font-family: 'Kanit', sans-serif; background-color: #f4f7f9; }
+        body { font-family: 'Kanit', sans-serif; background-color: #f8fafc; }
         .glass-card { background: rgba(255, 255, 255, 0.98); backdrop-filter: blur(10px); border-radius: 1.5rem; }
-        .scanner-box { border-radius: 1.2rem; overflow: hidden; border: 4px solid #4f46e5; background: #000; }
-        .hidden { display: none; }
+        .scanner-box { border-radius: 1.2rem; overflow: hidden; border: 4px solid #6366f1; background: #000; }
         .animate-fade-in { animation: fadeIn 0.3s ease-out; }
-        @keyframes fadeIn { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
-        .loading-pulse { animation: pulse 1.5s infinite; }
-        @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.5; } }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        .loading-dots:after { content: ' .'; animation: dots 1.5s steps(5, end) infinite;}
+        @keyframes dots { 0%, 20% { content: ' .'; } 40% { content: ' ..'; } 60% { content: ' ...'; } }
     </style>
 </head>
-<body class="min-h-screen pb-20">
+<body class="min-h-screen pb-10">
 
-    <nav class="bg-indigo-700 text-white p-4 shadow-xl sticky top-0 z-50">
+    <nav class="bg-indigo-600 text-white p-5 shadow-lg sticky top-0 z-50">
         <div class="container mx-auto flex justify-between items-center">
-            <h1 class="text-xl font-bold flex items-center gap-2">
-                <i class="fas fa-search-plus text-yellow-400"></i> Hybrid Search System
-            </h1>
-            <div class="h-3 w-3 bg-green-400 rounded-full animate-pulse shadow-[0_0_8px_rgba(74,222,128,0.8)]"></div>
+            <h1 class="text-xl font-bold"><i class="fas fa-id-card-alt mr-2"></i> ระบบค้นหาข้อมูลอัจฉริยะ</h1>
+            <div class="flex items-center gap-2">
+                <span class="text-xs bg-indigo-500 px-2 py-1 rounded-full border border-indigo-400">Online</span>
+            </div>
         </div>
     </nav>
 
     <div class="container mx-auto p-4 max-w-lg">
-        <div class="flex bg-gray-200 p-1.5 rounded-2xl mb-6 shadow-inner border border-gray-300">
-            <button onclick="switchTab('scan')" id="btn-scan" class="flex-1 py-3 rounded-xl font-bold transition-all bg-white shadow-md text-indigo-700">ค้นหา</button>
-            <button onclick="switchTab('add')" id="btn-add" class="flex-1 py-3 rounded-xl font-bold transition-all text-gray-500 hover:text-indigo-600">ลงทะเบียน</button>
-        </div>
-
         <div id="tab-scan" class="space-y-4 animate-fade-in">
-            <div class="glass-card p-5 shadow-2xl border border-white">
-                <div class="scanner-box mx-auto shadow-lg" id="reader"></div>
-                <div class="mt-5">
-                    <label class="text-xs font-bold text-indigo-500 uppercase tracking-widest ml-1">ค้นหาด้วย ID หรือ ชื่อ</label>
-                    <div class="relative mt-1">
+            <div class="glass-card p-6 shadow-xl border border-white">
+                <div class="scanner-box mx-auto shadow-md" id="reader"></div>
+                
+                <div class="mt-6">
+                    <label class="text-xs font-bold text-gray-400 uppercase tracking-widest ml-1">ค้นหาด่วน (ID / ชื่อ / นามสกุล)</label>
+                    <div class="relative mt-2">
                         <input type="text" id="scan-input" 
                                oninput="handleInstantSearch(this.value)"
-                               class="w-full p-4 pr-12 rounded-xl border-2 border-gray-100 focus:border-indigo-500 outline-none transition-all shadow-sm text-lg" 
-                               placeholder="พิมพ์ชื่อ หรือ แสกนบาร์โค้ด...">
-                        <div class="absolute right-4 top-1/2 -translate-y-1/2 text-indigo-300">
-                            <i class="fas fa-keyboard"></i>
+                               class="w-full p-4 pr-12 rounded-2xl border-2 border-gray-100 focus:border-indigo-500 outline-none transition-all shadow-sm text-lg" 
+                               placeholder="พิมพ์ชื่อหรือรหัสที่ต้องการ...">
+                        <div class="absolute right-4 top-1/2 -translate-y-1/2 text-indigo-400">
+                            <i class="fas fa-search"></i>
                         </div>
                     </div>
                 </div>
@@ -56,47 +51,15 @@
             
             <div id="result-card" class="glass-card p-6 shadow-2xl border-t-4 border-indigo-500 hidden animate-fade-in"></div>
         </div>
-
-        <div id="tab-add" class="hidden animate-fade-in">
-            <form id="reg-form" class="glass-card p-6 shadow-2xl border border-white space-y-4">
-                <h3 class="text-lg font-bold text-gray-800 border-b pb-2"><i class="fas fa-user-plus text-indigo-600 mr-2"></i>เพิ่มข้อมูลใหม่</h3>
-                <input type="text" id="reg-id" class="w-full p-4 rounded-xl border-2 border-gray-50 bg-gray-50 outline-none" placeholder="ID (สแกนเพื่อกรอก)" required>
-                <div class="grid grid-cols-2 gap-3">
-                    <input type="text" id="reg-name" class="w-full p-4 rounded-xl border-2 border-gray-50 bg-gray-50" placeholder="ชื่อ" required>
-                    <input type="text" id="reg-surname" class="w-full p-4 rounded-xl border-2 border-gray-50 bg-gray-50" placeholder="นามสกุล" required>
-                </div>
-                <input type="text" id="reg-idcard" class="w-full p-4 rounded-xl border-2 border-gray-50 bg-gray-50" placeholder="เลขบัตรประชาชน" required>
-                
-                <div class="border-2 border-dashed border-indigo-200 rounded-2xl p-8 text-center cursor-pointer hover:bg-indigo-50 transition-colors" onclick="document.getElementById('reg-image').click()">
-                    <i class="fas fa-camera text-4xl text-indigo-300 mb-2"></i>
-                    <p class="text-sm font-medium text-gray-500">ถ่ายรูปประกอบโปรไฟล์</p>
-                    <input type="file" id="reg-image" class="hidden" accept="image/*" onchange="handleImage(event)">
-                    <img id="img-preview" class="mt-4 w-full rounded-xl hidden shadow-xl border-4 border-white">
-                </div>
-                
-                <button type="submit" class="w-full bg-indigo-600 text-white py-4 rounded-xl font-bold text-lg shadow-xl hover:bg-indigo-700 transition-all">บันทึกข้อมูล</button>
-            </form>
-        </div>
     </div>
 
     <script>
         const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbw9WR8Um_fw-_xJWwwBWZTNh3cCfz5SP9Pef6-5A7kwzl6HKjGVfq7eSV6vLkxkZayP/exec";
         let scanner = new Html5Qrcode("reader");
-        let base64Image = "";
-        let displayTimeout;
         let searchTimer;
 
-        function switchTab(type) {
-            const isScan = type === 'scan';
-            document.getElementById('tab-scan').classList.toggle('hidden', !isScan);
-            document.getElementById('tab-add').classList.toggle('hidden', isScan);
-            document.getElementById('btn-scan').className = isScan ? "flex-1 py-3 rounded-xl font-bold bg-white shadow-md text-indigo-700" : "flex-1 py-3 rounded-xl font-bold text-gray-500";
-            document.getElementById('btn-add').className = !isScan ? "flex-1 py-3 rounded-xl font-bold bg-white shadow-md text-indigo-700" : "flex-1 py-3 rounded-xl font-bold text-gray-500";
-            if(isScan) startCamera(); else scanner.stop().catch(()=>{});
-        }
-
         function startCamera() {
-            scanner.start({ facingMode: "environment" }, { fps: 20, qrbox: 260 }, (text) => {
+            scanner.start({ facingMode: "environment" }, { fps: 15, qrbox: 250 }, (text) => {
                 document.getElementById('scan-input').value = text;
                 searchData(text);
             }).catch(() => {});
@@ -104,20 +67,17 @@
 
         function handleInstantSearch(val) {
             clearTimeout(searchTimer);
-            if (val.length < 2) { // ค้นหาเมื่อพิมพ์ 2 ตัวอักษรขึ้นไป
+            if (val.trim().length < 2) { // ค้นหาเมื่อพิมพ์อย่างน้อย 2 ตัวอักษร
                 document.getElementById('result-card').classList.add('hidden');
                 return;
             }
-            searchTimer = setTimeout(() => searchData(val), 400);
+            searchTimer = setTimeout(() => searchData(val.trim()), 500);
         }
 
         async function searchData(query) {
-            if(!query) return;
-            if(displayTimeout) clearTimeout(displayTimeout);
-            
             const resultCard = document.getElementById('result-card');
             resultCard.classList.remove('hidden');
-            resultCard.innerHTML = `<div class="text-center p-4 loading-pulse text-indigo-500 font-bold"><i class="fas fa-spinner fa-spin mr-2"></i>กำลังค้นหาข้อมูล...</div>`;
+            resultCard.innerHTML = `<div class="text-center p-6 text-indigo-500 font-medium loading-dots">ระบบกำลังค้นหาข้อมูล</div>`;
 
             try {
                 const res = await fetch(`${SCRIPT_URL}?id=${encodeURIComponent(query)}`);
@@ -125,64 +85,40 @@
 
                 if (data) {
                     let fileId = data.image ? data.image.match(/[-\w]{25,}/) : null;
-                    let displayImg = fileId ? `https://lh3.googleusercontent.com/d/${fileId[0]}` : 'https://via.placeholder.com/150';
+                    let imgSource = fileId ? `https://drive.google.com/uc?id=${fileId[0]}` : 'https://via.placeholder.com/150?text=No+Photo';
                     
                     resultCard.innerHTML = `
                         <div class="text-center animate-fade-in">
-                            <img src="${displayImg}" class="w-40 h-40 rounded-3xl mx-auto border-4 border-white object-cover shadow-2xl mb-4" onerror="this.src='https://via.placeholder.com/150?text=No+Photo'">
-                            <h3 class="text-2xl font-black text-gray-800 mb-1">${data.name} ${data.surname}</h3>
-                            <div class="flex justify-center gap-2 mb-4">
-                                <span class="bg-indigo-100 text-indigo-700 px-3 py-1 rounded-full text-xs font-bold uppercase">ID: ${data.id}</span>
+                            <div class="relative inline-block">
+                                <img src="${imgSource}" class="w-32 h-32 rounded-full mx-auto border-4 border-white object-cover shadow-lg mb-4">
+                                <div class="absolute bottom-4 right-0 bg-green-500 w-6 h-6 rounded-full border-2 border-white"></div>
                             </div>
-                            <div class="bg-gray-50 rounded-2xl p-4 text-left border border-gray-100">
-                                <p class="text-gray-400 text-[10px] font-bold uppercase mb-1">เลขบัตรประชาชน</p>
-                                <p class="font-mono text-gray-700 font-bold tracking-tighter">${data.idCard}</p>
+                            <h3 class="text-xl font-bold text-gray-800">${data.name} ${data.surname}</h3>
+                            <p class="text-indigo-600 font-bold text-sm mb-4 tracking-wider">ID: ${data.id}</p>
+                            
+                            <div class="grid grid-cols-1 gap-2 text-left bg-gray-50 p-4 rounded-xl border border-gray-100">
+                                <div>
+                                    <p class="text-[10px] text-gray-400 font-bold uppercase">เลขประจำตัวประชาชน</p>
+                                    <p class="text-gray-700 font-mono">${data.idCard || '-'}</p>
+                                </div>
                             </div>
-                            <p class="mt-4 text-[10px] text-red-400 font-bold">แสดงผล 10 วินาที</p>
+                            <button onclick="location.reload()" class="mt-6 text-xs text-gray-400 hover:text-indigo-500 transition-colors">
+                                <i class="fas fa-sync-alt mr-1"></i> ล้างหน้าจอ
+                            </button>
                         </div>
                     `;
-                    displayTimeout = setTimeout(() => {
-                        resultCard.classList.add('hidden');
-                        document.getElementById('scan-input').value = "";
-                    }, 10000);
                 } else {
-                    resultCard.innerHTML = `<div class="text-center p-4 text-red-400 font-bold"><i class="fas fa-exclamation-triangle mr-2"></i>ไม่พบข้อมูลของ "${query}"</div>`;
-                    displayTimeout = setTimeout(() => resultCard.classList.add('hidden'), 3000);
+                    resultCard.innerHTML = `
+                        <div class="text-center p-6">
+                            <i class="fas fa-user-slash text-red-300 text-3xl mb-3"></i>
+                            <p class="text-red-400 font-bold">ไม่พบข้อมูล "${query}"</p>
+                            <p class="text-xs text-gray-400 mt-1">กรุณาตรวจสอบชื่อหรือรหัสอีกครั้ง</p>
+                        </div>`;
                 }
             } catch (e) {
-                resultCard.innerHTML = `<div class="text-center p-4 text-orange-400 font-bold">เกิดข้อผิดพลาดในการเชื่อมต่อ</div>`;
+                resultCard.innerHTML = `<div class="text-center p-6 text-orange-400">การเชื่อมต่อผิดพลาด</div>`;
             }
         }
-
-        function handleImage(event) {
-            const file = event.target.files[0];
-            const reader = new FileReader();
-            reader.onload = () => {
-                base64Image = reader.result;
-                const preview = document.getElementById('img-preview');
-                preview.src = base64Image;
-                preview.classList.remove('hidden');
-            };
-            reader.readAsDataURL(file);
-        }
-
-        document.getElementById('reg-form').onsubmit = async (e) => {
-            e.preventDefault();
-            Swal.fire({ title: 'กำลังบันทึก...', allowOutsideClick: false, didOpen: () => Swal.showLoading() });
-            const payload = {
-                id: document.getElementById('reg-id').value,
-                name: document.getElementById('reg-name').value,
-                surname: document.getElementById('reg-surname').value,
-                idCard: document.getElementById('reg-idcard').value,
-                image: base64Image
-            };
-            try {
-                await fetch(SCRIPT_URL, { method: 'POST', body: JSON.stringify(payload) });
-                Swal.fire({ icon: 'success', title: 'บันทึกสำเร็จ' }).then(() => location.reload());
-            } catch (error) {
-                Swal.fire({ icon: 'success', title: 'บันทึกสำเร็จ' }).then(() => location.reload());
-            }
-        };
 
         window.onload = startCamera;
     </script>
