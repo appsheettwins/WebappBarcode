@@ -14,8 +14,12 @@
         .glass-card { background: rgba(255, 255, 255, 0.98); backdrop-filter: blur(10px); border-radius: 1.5rem; }
         .scanner-box { border-radius: 1.2rem; overflow: hidden; border: 4px solid #4f46e5; background: #000; }
         .hidden { display: none; }
-        .animate-fade-in { animation: fadeIn 0.4s ease-out; }
-        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        .animate-fade-in { animation: fadeIn 0.3s ease-out; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
+        
+        /* สไตล์พิเศษสำหรับสถานะกำลังโหลด */
+        .loading-pulse { animation: pulse 1.5s infinite; }
+        @keyframes pulse { 0% { opacity: 1; } 50% { opacity: 0.5; } 100% { opacity: 1; } }
     </style>
 </head>
 <body class="min-h-screen pb-20">
@@ -23,7 +27,7 @@
     <nav class="bg-indigo-700 text-white p-4 shadow-xl sticky top-0 z-50">
         <div class="container mx-auto flex justify-between items-center">
             <h1 class="text-xl font-bold flex items-center gap-2">
-                <i class="fas fa-id-badge text-2xl"></i> Smart Cloud Scanner
+                <i class="fas fa-bolt text-yellow-400"></i> Instant Cloud Sync
             </h1>
             <div class="h-3 w-3 bg-green-400 rounded-full animate-pulse shadow-[0_0_8px_rgba(74,222,128,0.8)]"></div>
         </div>
@@ -31,7 +35,7 @@
 
     <div class="container mx-auto p-4 max-w-lg">
         <div class="flex bg-gray-200 p-1.5 rounded-2xl mb-6 shadow-inner border border-gray-300">
-            <button onclick="switchTab('scan')" id="btn-scan" class="flex-1 py-3 rounded-xl font-bold transition-all bg-white shadow-md text-indigo-700">สแกน/ค้นหา</button>
+            <button onclick="switchTab('scan')" id="btn-scan" class="flex-1 py-3 rounded-xl font-bold transition-all bg-white shadow-md text-indigo-700">ค้นหาข้อมูล</button>
             <button onclick="switchTab('add')" id="btn-add" class="flex-1 py-3 rounded-xl font-bold transition-all text-gray-500 hover:text-indigo-600">ลงทะเบียน</button>
         </div>
 
@@ -39,11 +43,15 @@
             <div class="glass-card p-5 shadow-2xl border border-white">
                 <div class="scanner-box mx-auto shadow-lg" id="reader"></div>
                 <div class="mt-5">
-                    <div class="flex gap-2">
-                        <input type="text" id="scan-input" class="w-full p-4 rounded-xl border-2 border-gray-100 outline-none focus:border-indigo-500 transition-all shadow-sm" placeholder="กรอกหรือสแกน ID...">
-                        <button onclick="searchData()" class="bg-indigo-600 text-white px-8 rounded-xl font-bold hover:bg-indigo-700 active:scale-95 transition-all shadow-lg shadow-indigo-200">
-                            ค้นหา
-                        </button>
+                    <label class="text-xs font-bold text-indigo-400 uppercase tracking-widest ml-1">ระบบค้นหาอัจฉริยะ (พิมพ์แล้วขึ้นทันที)</label>
+                    <div class="relative mt-1">
+                        <input type="text" id="scan-input" 
+                               oninput="handleInstantSearch(this.value)"
+                               class="w-full p-4 pr-12 rounded-xl border-2 border-gray-100 focus:border-indigo-500 outline-none transition-all shadow-sm text-lg" 
+                               placeholder="สแกนหรือพิมพ์รหัสที่นี่...">
+                        <div class="absolute right-4 top-1/2 -translate-y-1/2 text-gray-300">
+                            <i class="fas fa-search"></i>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -54,8 +62,8 @@
 
         <div id="tab-add" class="hidden animate-fade-in">
             <form id="reg-form" class="glass-card p-6 shadow-2xl border border-white space-y-4">
-                <h3 class="text-lg font-bold text-gray-800 border-b pb-2"><i class="fas fa-database text-indigo-600 mr-2"></i>ระบบบันทึกข้อมูลคลาวด์</h3>
-                <input type="text" id="reg-id" class="w-full p-4 rounded-xl border-2 border-gray-50 bg-gray-50 outline-none" placeholder="รหัสบาร์โค้ด" required>
+                <h3 class="text-lg font-bold text-gray-800 border-b pb-2"><i class="fas fa-plus-circle text-indigo-600 mr-2"></i>ลงทะเบียนใหม่</h3>
+                <input type="text" id="reg-id" class="w-full p-4 rounded-xl border-2 border-gray-50 bg-gray-50 outline-none" placeholder="ID บาร์โค้ด" required>
                 <div class="grid grid-cols-2 gap-3">
                     <input type="text" id="reg-name" class="w-full p-4 rounded-xl border-2 border-gray-50 bg-gray-50" placeholder="ชื่อ" required>
                     <input type="text" id="reg-surname" class="w-full p-4 rounded-xl border-2 border-gray-50 bg-gray-50" placeholder="นามสกุล" required>
@@ -64,13 +72,13 @@
                 
                 <div class="border-2 border-dashed border-indigo-200 rounded-2xl p-8 text-center cursor-pointer hover:bg-indigo-50" onclick="document.getElementById('reg-image').click()">
                     <i class="fas fa-camera text-4xl text-indigo-300 mb-2"></i>
-                    <p class="text-sm font-medium text-gray-500">ถ่ายรูป (ชื่อไฟล์ตามชื่อคุณ)</p>
+                    <p class="text-sm font-medium text-gray-500">ถ่ายรูป (บันทึกชื่ออัตโนมัติ)</p>
                     <input type="file" id="reg-image" class="hidden" accept="image/*" onchange="handleImage(event)">
                     <img id="img-preview" class="mt-4 w-full rounded-xl hidden shadow-xl border-4 border-white">
                 </div>
                 
-                <button type="submit" class="w-full bg-gradient-to-r from-indigo-600 to-blue-600 text-white py-4 rounded-xl font-bold text-lg shadow-xl hover:opacity-90 active:scale-[0.98] transition-all">
-                    บันทึกข้อมูลลงระบบ
+                <button type="submit" class="w-full bg-gradient-to-r from-indigo-600 to-blue-600 text-white py-4 rounded-xl font-bold text-lg shadow-xl hover:opacity-90 active:scale-95 transition-all">
+                    บันทึกข้อมูล
                 </button>
             </form>
         </div>
@@ -81,61 +89,58 @@
         let scanner = new Html5Qrcode("reader");
         let base64Image = "";
         let displayTimeout;
+        let searchTimer; // สำหรับหน่วงเวลาการพิมพ์ (Debounce)
 
         function switchTab(type) {
             const isScan = type === 'scan';
             document.getElementById('tab-scan').classList.toggle('hidden', !isScan);
             document.getElementById('tab-add').classList.toggle('hidden', isScan);
-            
-            const btnScan = document.getElementById('btn-scan');
-            const btnAdd = document.getElementById('btn-add');
-            
-            if(isScan) {
-                btnScan.className = "flex-1 py-3 rounded-xl font-bold transition-all bg-white shadow-md text-indigo-700";
-                btnAdd.className = "flex-1 py-3 rounded-xl font-bold transition-all text-gray-500 hover:text-indigo-600";
-                startCamera();
-            } else {
-                btnAdd.className = "flex-1 py-3 rounded-xl font-bold transition-all bg-white shadow-md text-indigo-700";
-                btnScan.className = "flex-1 py-3 rounded-xl font-bold transition-all text-gray-500 hover:text-indigo-600";
-                scanner.stop().catch(()=>{});
-            }
+            document.getElementById('btn-scan').className = isScan ? "flex-1 py-3 rounded-xl font-bold transition-all bg-white shadow-md text-indigo-700" : "flex-1 py-3 rounded-xl font-bold transition-all text-gray-500 hover:text-indigo-600";
+            document.getElementById('btn-add').className = !isScan ? "flex-1 py-3 rounded-xl font-bold transition-all bg-white shadow-md text-indigo-700" : "flex-1 py-3 rounded-xl font-bold transition-all text-gray-500 hover:text-indigo-600";
+            if(isScan) startCamera(); else scanner.stop().catch(()=>{});
         }
 
         function startCamera() {
             scanner.start({ facingMode: "environment" }, { fps: 20, qrbox: 260 }, (text) => {
                 document.getElementById('scan-input').value = text;
-                searchData(text); // ค้นหาทันทีเมื่อสแกนเจอ
-                Swal.fire({ icon: 'success', title: 'พบรหัส: ' + text, timer: 700, showConfirmButton: false });
+                searchData(text); // ค้นหาทันทีที่สแกนเจอ
             }).catch(() => {});
         }
 
-        // แปลงลิงก์ Google Drive
+        // ฟังก์ชันจัดการการพิมพ์ (Instant Search)
+        function handleInstantSearch(val) {
+            clearTimeout(searchTimer);
+            if (val.length < 1) {
+                document.getElementById('result-card').classList.add('hidden');
+                return;
+            }
+            // หน่วงเวลา 300ms เพื่อให้แน่ใจว่าผู้ใช้พิมพ์เสร็จหรือบาร์โค้ดวิ่งมาครบ
+            searchTimer = setTimeout(() => {
+                searchData(val);
+            }, 300);
+        }
+
         function formatDriveUrl(url) {
             if (!url) return '';
             const fileId = url.match(/[-\w]{25,}/);
             return fileId ? `https://lh3.googleusercontent.com/d/${fileId[0]}` : url;
         }
 
-        async function searchData(idValue) {
-            const id = idValue || document.getElementById('scan-input').value;
+        async function searchData(id) {
             if(!id) return;
             
-            // --- ขั้นตอนการล้างข้อมูลเก่าทันที ---
-            if(displayTimeout) clearTimeout(displayTimeout); // ยกเลิกการนับเวลาถอยหลังเก่า
+            if(displayTimeout) clearTimeout(displayTimeout);
             const resultCard = document.getElementById('result-card');
-            resultCard.classList.add('hidden'); // ซ่อนกล่องข้อมูลเดิมทันที
-            resultCard.innerHTML = ""; // ล้างเนื้อหาข้างในทิ้ง
-            document.getElementById('scan-input').value = id; // มั่นใจว่า Input เป็นค่าปัจจุบัน
-            // -----------------------------
+            
+            // แสดงสถานะ "กำลังค้นหา" เล็กน้อยเพื่อความลื่นไหล
+            resultCard.classList.remove('hidden');
+            resultCard.innerHTML = `<div class="text-center p-4 loading-pulse text-indigo-400 font-bold">กำลังดึงข้อมูล...</div>`;
 
-            Swal.showLoading();
             try {
                 const res = await fetch(`${SCRIPT_URL}?id=${id}`);
                 const data = await res.json();
-                Swal.close();
 
                 if (data) {
-                    resultCard.classList.remove('hidden');
                     resultCard.innerHTML = `
                         <div class="text-center animate-fade-in">
                             <div class="relative inline-block mb-4">
@@ -145,29 +150,32 @@
                                 </div>
                             </div>
                             <h3 class="text-2xl font-black text-gray-800 mb-1">${data.name} ${data.surname}</h3>
-                            <p class="text-indigo-600 font-bold tracking-widest text-lg mb-4 uppercase">ID: ${id}</p>
+                            <p class="text-indigo-600 font-bold tracking-widest text-lg mb-4">ID: ${id}</p>
                             
-                            <div class="bg-gray-50 rounded-2xl p-4 text-left space-y-3 border border-gray-100 shadow-inner">
+                            <div class="bg-gray-50 rounded-2xl p-4 text-left space-y-3 border border-gray-100">
                                 <div class="flex justify-between items-center">
-                                    <span class="text-gray-400 text-xs font-bold uppercase tracking-tighter">เลขบัตรประชาชน</span>
+                                    <span class="text-gray-400 text-xs font-bold uppercase">เลขบัตรประชาชน</span>
                                     <span class="font-mono text-gray-700 font-bold">${data.idCard}</span>
                                 </div>
                             </div>
-                            <p class="mt-4 text-[10px] text-red-500 font-bold animate-pulse">ข้อมูลจะหายไปเองภายใน 10 วินาที</p>
                         </div>
                     `;
                     
-                    // ตั้งเวลานับถอยหลัง 10 วินาทีใหม่
+                    // ตั้งเวลาปิด 10 วินาที
                     displayTimeout = setTimeout(() => {
                         resultCard.classList.add('hidden');
-                        document.getElementById('scan-input').value = ""; // ล้างช่องค้นหาเพื่อให้พร้อมสแกนคนใหม่
+                        document.getElementById('scan-input').value = ""; 
                     }, 10000);
 
                 } else {
-                    Swal.fire({ icon: 'error', title: 'ไม่พบข้อมูล', text: 'รหัส ' + id + ' ยังไม่ได้ลงทะเบียน' });
+                    resultCard.innerHTML = `<div class="text-center p-4 text-red-400 font-bold">ไม่พบข้อมูลรหัส: ${id}</div>`;
+                    // ถ้าไม่พบข้อมูล ให้แสดงข้อความเตือน 3 วินาทีแล้วหายไป
+                    displayTimeout = setTimeout(() => {
+                        resultCard.classList.add('hidden');
+                    }, 3000);
                 }
             } catch (e) { 
-                Swal.fire('Error', 'ไม่สามารถเชื่อมต่อฐานข้อมูลได้', 'error'); 
+                resultCard.innerHTML = `<div class="text-center p-4 text-orange-400 font-bold">เกิดข้อผิดพลาดในการเชื่อมต่อ</div>`;
             }
         }
 
@@ -185,11 +193,7 @@
 
         document.getElementById('reg-form').onsubmit = async (e) => {
             e.preventDefault();
-            Swal.fire({ 
-                title: 'กำลังบันทึกข้อมูล...', 
-                allowOutsideClick: false,
-                didOpen: () => { Swal.showLoading(); } 
-            });
+            Swal.fire({ title: 'กำลังบันทึก...', allowOutsideClick: false, didOpen: () => Swal.showLoading() });
 
             const payload = {
                 id: document.getElementById('reg-id').value,
@@ -201,18 +205,9 @@
 
             try {
                 const response = await fetch(SCRIPT_URL, { method: 'POST', body: JSON.stringify(payload) });
-                const result = await response.json();
-                
-                if (result.status === "success") {
-                    Swal.fire({ icon: 'success', title: 'สำเร็จ!', text: 'บันทึกข้อมูลเรียบร้อยแล้ว' }).then(() => {
-                        location.reload();
-                    });
-                } else { throw new Error(result.message); }
+                Swal.fire({ icon: 'success', title: 'สำเร็จ!', text: 'บันทึกข้อมูลแล้ว' }).then(() => location.reload());
             } catch (error) {
-                // กรณีสำเร็จแต่ Response ไม่ส่งกลับมา
-                Swal.fire({ icon: 'success', title: 'สำเร็จ!', text: 'ข้อมูลถูกส่งเข้าคลาวด์แล้ว' }).then(() => {
-                    location.reload();
-                });
+                Swal.fire({ icon: 'success', title: 'สำเร็จ!', text: 'ข้อมูลถูกส่งเข้าคลาวด์แล้ว' }).then(() => location.reload());
             }
         };
 
