@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Barcode Scanner WebApp</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <script src="https://unpkg.com/html5-qrcode"></script>
+    <style>
+        #reader { width: 100%; max-width: 500px; margin: auto; }
+        .hidden { display: none; }
+        #preview { width: 100px; height: 100px; object-fit: cover; border: 1px solid #ccc; }
+    </style>
+</head>
+<body class="bg-light">
+
+<div class="container py-4">
+    <h2 class="text-center mb-4">ระบบจัดการข้อมูลบาร์โค้ด</h2>
+    
+    <div class="d-flex justify-content-center mb-4">
+        <button class="btn btn-primary me-2" onclick="showPage('scan-page')">สแกน/ค้นหา</button>
+        <button class="btn btn-success" onclick="showPage('add-page')">เพิ่มข้อมูลใหม่</button>
+    </div>
+
+    <div id="scan-page" class="card p-3 shadow-sm">
+        <h4>แสกนหรือกรอกบาร์โค้ด</h4>
+        <div id="reader"></div>
+        <input type="text" id="manual-id" class="form-control mt-3" placeholder="หรือพิมพ์เลขที่นี่...">
+        <button class="btn btn-info mt-2 w-100" onclick="searchData()">ค้นหาข้อมูล</button>
+        <div id="result-display" class="mt-3 p-3 border rounded hidden"></div>
+    </div>
+
+    <div id="add-page" class="card p-3 shadow-sm hidden">
+        <h4>ลงทะเบียนใหม่</h4>
+        <form id="add-form">
+            <input type="text" id="new-id" class="form-control mb-2" placeholder="เลขบาร์โค้ด (แสกนเพื่อกรอก)" required>
+            <input type="text" id="new-name" class="form-control mb-2" placeholder="ชื่อ" required>
+            <input type="text" id="new-surname" class="form-control mb-2" placeholder="นามสกุล" required>
+            <input type="text" id="new-idcard" class="form-control mb-2" placeholder="เลขบัตรประชาชน" required>
+            <label>รูปภาพ:</label>
+            <input type="file" id="new-image" class="form-control mb-2" accept="image/*" onchange="previewImage(event)">
+            <img id="preview" class="mb-2 hidden">
+            <button type="submit" class="btn btn-success w-100">บันทึกลง Google Sheet</button>
+        </form>
+    </div>
+</div>
+
+<script>
+    const scriptURL = 'https://script.google.com/macros/s/AKfycbzPin5zv73cFcam05AluOfvTm_HA43Bd5EYTkT6ZUFGobGL2qiXun0VUSgFVvcH844q/exec';
+    let html5QrCode = new Html5Qrcode("reader");
+
+    // ฟังก์ชันสลับหน้า
+    function showPage(pageId) {
+        document.getElementById('scan-page').classList.toggle('hidden', pageId !== 'scan-page');
+        document.getElementById('add-page').classList.toggle('hidden', pageId !== 'add-page');
+        if(pageId === 'scan-page') startScanner(); else html5QrCode.stop();
+    }
+
+    // เริ่มกล้องสแกน
+    function startScanner() {
+        html5QrCode.start({ facingMode: "environment" }, { fps: 10, qrbox: 250 },
+            (decodedText) => {
+                document.getElementById('manual-id').value = decodedText;
+                document.getElementById('new-id').value = decodedText;
+                searchData(decodedText);
+            }
+        ).catch(err => console.log("Camera error:", err));
+    }
+
+    // ค้นหาข้อมูล
+    async function searchData(id) {
+        const searchId = id || document.getElementById('manual-id').value;
+        const res = await fetch(`${scriptURL}?id=${searchId}`);
+        const data = await res.json();
+        const display = document.getElementById('result-display');
+        display.classList.remove('hidden');
+        if (data) {
+            display.innerHTML = `<strong>พบข้อมูล:</strong> ${data.name} ${data.surname}<br>ID Card: ${data.idCard}<br><img src="${data.image}" width="100">`;
+        } else {
+            display.innerHTML = `<span class="text-danger">ไม่พบข้อมูล</span>`;
+        }
+    }
+
+    // แปลงรูปเป็น Base64
+    let base64Image = "";
+    function previewImage(event) {
+        const file = event.target.files[0];
+        const reader = new FileReader();
+        reader.onload = () => {
+            base64Image = reader.result;
+            document.getElementById('preview').src = base64Image;
+            document.getElementById('preview').classList.remove('hidden');
+        };
+        reader.readAsDataURL(file);
+    }
+
+    // ส่งข้อมูลบันทึก
+    document.getElementById('add-form').onsubmit = async (e) => {
+        e.preventDefault();
+        const payload = {
+            id: document.getElementById('new-id').value,
+            name: document.getElementById('new-name').value,
+            surname: document.getElementById('new-surname').value,
+            idCard: document.getElementById('new-idcard').value,
+            image: base64Image
+        };
+        const res = await fetch(scriptURL, { method: 'POST', body: JSON.stringify(payload) });
+        const result = await res.json();
+        if(result.result === 'success') { alert('บันทึกสำเร็จ!'); location.reload(); }
+    };
+
+    startScanner();
+</script>
+</body>
+</html>
