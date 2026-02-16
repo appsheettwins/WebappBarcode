@@ -3,23 +3,21 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Smart Scanner Cloud Pro</title>
+    <title>Smart Scanner Hybrid Search</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/html5-qrcode"></script>
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Kanit:wght@300;400;500&display=swap');
-        body { font-family: 'Kanit', sans-serif; background-color: #f0f4f8; }
+        body { font-family: 'Kanit', sans-serif; background-color: #f4f7f9; }
         .glass-card { background: rgba(255, 255, 255, 0.98); backdrop-filter: blur(10px); border-radius: 1.5rem; }
         .scanner-box { border-radius: 1.2rem; overflow: hidden; border: 4px solid #4f46e5; background: #000; }
         .hidden { display: none; }
         .animate-fade-in { animation: fadeIn 0.3s ease-out; }
         @keyframes fadeIn { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
-        
-        /* สไตล์พิเศษสำหรับสถานะกำลังโหลด */
         .loading-pulse { animation: pulse 1.5s infinite; }
-        @keyframes pulse { 0% { opacity: 1; } 50% { opacity: 0.5; } 100% { opacity: 1; } }
+        @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.5; } }
     </style>
 </head>
 <body class="min-h-screen pb-20">
@@ -27,7 +25,7 @@
     <nav class="bg-indigo-700 text-white p-4 shadow-xl sticky top-0 z-50">
         <div class="container mx-auto flex justify-between items-center">
             <h1 class="text-xl font-bold flex items-center gap-2">
-                <i class="fas fa-bolt text-yellow-400"></i> Instant Cloud Sync
+                <i class="fas fa-search-plus text-yellow-400"></i> Hybrid Search System
             </h1>
             <div class="h-3 w-3 bg-green-400 rounded-full animate-pulse shadow-[0_0_8px_rgba(74,222,128,0.8)]"></div>
         </div>
@@ -35,7 +33,7 @@
 
     <div class="container mx-auto p-4 max-w-lg">
         <div class="flex bg-gray-200 p-1.5 rounded-2xl mb-6 shadow-inner border border-gray-300">
-            <button onclick="switchTab('scan')" id="btn-scan" class="flex-1 py-3 rounded-xl font-bold transition-all bg-white shadow-md text-indigo-700">ค้นหาข้อมูล</button>
+            <button onclick="switchTab('scan')" id="btn-scan" class="flex-1 py-3 rounded-xl font-bold transition-all bg-white shadow-md text-indigo-700">ค้นหา</button>
             <button onclick="switchTab('add')" id="btn-add" class="flex-1 py-3 rounded-xl font-bold transition-all text-gray-500 hover:text-indigo-600">ลงทะเบียน</button>
         </div>
 
@@ -43,43 +41,40 @@
             <div class="glass-card p-5 shadow-2xl border border-white">
                 <div class="scanner-box mx-auto shadow-lg" id="reader"></div>
                 <div class="mt-5">
-                    <label class="text-xs font-bold text-indigo-400 uppercase tracking-widest ml-1">ระบบค้นหาอัจฉริยะ (พิมพ์แล้วขึ้นทันที)</label>
+                    <label class="text-xs font-bold text-indigo-500 uppercase tracking-widest ml-1">ค้นหาด้วย ID หรือ ชื่อ</label>
                     <div class="relative mt-1">
                         <input type="text" id="scan-input" 
                                oninput="handleInstantSearch(this.value)"
                                class="w-full p-4 pr-12 rounded-xl border-2 border-gray-100 focus:border-indigo-500 outline-none transition-all shadow-sm text-lg" 
-                               placeholder="สแกนหรือพิมพ์รหัสที่นี่...">
-                        <div class="absolute right-4 top-1/2 -translate-y-1/2 text-gray-300">
-                            <i class="fas fa-search"></i>
+                               placeholder="พิมพ์ชื่อ หรือ แสกนบาร์โค้ด...">
+                        <div class="absolute right-4 top-1/2 -translate-y-1/2 text-indigo-300">
+                            <i class="fas fa-keyboard"></i>
                         </div>
                     </div>
                 </div>
             </div>
             
-            <div id="result-card" class="glass-card p-6 shadow-2xl border-t-4 border-indigo-500 hidden animate-fade-in">
-                </div>
+            <div id="result-card" class="glass-card p-6 shadow-2xl border-t-4 border-indigo-500 hidden animate-fade-in"></div>
         </div>
 
         <div id="tab-add" class="hidden animate-fade-in">
             <form id="reg-form" class="glass-card p-6 shadow-2xl border border-white space-y-4">
-                <h3 class="text-lg font-bold text-gray-800 border-b pb-2"><i class="fas fa-plus-circle text-indigo-600 mr-2"></i>ลงทะเบียนใหม่</h3>
-                <input type="text" id="reg-id" class="w-full p-4 rounded-xl border-2 border-gray-50 bg-gray-50 outline-none" placeholder="ID บาร์โค้ด" required>
+                <h3 class="text-lg font-bold text-gray-800 border-b pb-2"><i class="fas fa-user-plus text-indigo-600 mr-2"></i>เพิ่มข้อมูลใหม่</h3>
+                <input type="text" id="reg-id" class="w-full p-4 rounded-xl border-2 border-gray-50 bg-gray-50 outline-none" placeholder="ID (สแกนเพื่อกรอก)" required>
                 <div class="grid grid-cols-2 gap-3">
                     <input type="text" id="reg-name" class="w-full p-4 rounded-xl border-2 border-gray-50 bg-gray-50" placeholder="ชื่อ" required>
                     <input type="text" id="reg-surname" class="w-full p-4 rounded-xl border-2 border-gray-50 bg-gray-50" placeholder="นามสกุล" required>
                 </div>
                 <input type="text" id="reg-idcard" class="w-full p-4 rounded-xl border-2 border-gray-50 bg-gray-50" placeholder="เลขบัตรประชาชน" required>
                 
-                <div class="border-2 border-dashed border-indigo-200 rounded-2xl p-8 text-center cursor-pointer hover:bg-indigo-50" onclick="document.getElementById('reg-image').click()">
+                <div class="border-2 border-dashed border-indigo-200 rounded-2xl p-8 text-center cursor-pointer hover:bg-indigo-50 transition-colors" onclick="document.getElementById('reg-image').click()">
                     <i class="fas fa-camera text-4xl text-indigo-300 mb-2"></i>
-                    <p class="text-sm font-medium text-gray-500">ถ่ายรูป (บันทึกชื่ออัตโนมัติ)</p>
+                    <p class="text-sm font-medium text-gray-500">ถ่ายรูปประกอบโปรไฟล์</p>
                     <input type="file" id="reg-image" class="hidden" accept="image/*" onchange="handleImage(event)">
                     <img id="img-preview" class="mt-4 w-full rounded-xl hidden shadow-xl border-4 border-white">
                 </div>
                 
-                <button type="submit" class="w-full bg-gradient-to-r from-indigo-600 to-blue-600 text-white py-4 rounded-xl font-bold text-lg shadow-xl hover:opacity-90 active:scale-95 transition-all">
-                    บันทึกข้อมูล
-                </button>
+                <button type="submit" class="w-full bg-indigo-600 text-white py-4 rounded-xl font-bold text-lg shadow-xl hover:bg-indigo-700 transition-all">บันทึกข้อมูล</button>
             </form>
         </div>
     </div>
@@ -89,92 +84,72 @@
         let scanner = new Html5Qrcode("reader");
         let base64Image = "";
         let displayTimeout;
-        let searchTimer; // สำหรับหน่วงเวลาการพิมพ์ (Debounce)
+        let searchTimer;
 
         function switchTab(type) {
             const isScan = type === 'scan';
             document.getElementById('tab-scan').classList.toggle('hidden', !isScan);
             document.getElementById('tab-add').classList.toggle('hidden', isScan);
-            document.getElementById('btn-scan').className = isScan ? "flex-1 py-3 rounded-xl font-bold transition-all bg-white shadow-md text-indigo-700" : "flex-1 py-3 rounded-xl font-bold transition-all text-gray-500 hover:text-indigo-600";
-            document.getElementById('btn-add').className = !isScan ? "flex-1 py-3 rounded-xl font-bold transition-all bg-white shadow-md text-indigo-700" : "flex-1 py-3 rounded-xl font-bold transition-all text-gray-500 hover:text-indigo-600";
+            document.getElementById('btn-scan').className = isScan ? "flex-1 py-3 rounded-xl font-bold bg-white shadow-md text-indigo-700" : "flex-1 py-3 rounded-xl font-bold text-gray-500";
+            document.getElementById('btn-add').className = !isScan ? "flex-1 py-3 rounded-xl font-bold bg-white shadow-md text-indigo-700" : "flex-1 py-3 rounded-xl font-bold text-gray-500";
             if(isScan) startCamera(); else scanner.stop().catch(()=>{});
         }
 
         function startCamera() {
             scanner.start({ facingMode: "environment" }, { fps: 20, qrbox: 260 }, (text) => {
                 document.getElementById('scan-input').value = text;
-                searchData(text); // ค้นหาทันทีที่สแกนเจอ
+                searchData(text);
             }).catch(() => {});
         }
 
-        // ฟังก์ชันจัดการการพิมพ์ (Instant Search)
         function handleInstantSearch(val) {
             clearTimeout(searchTimer);
-            if (val.length < 1) {
+            if (val.length < 2) { // ค้นหาเมื่อพิมพ์ 2 ตัวอักษรขึ้นไป
                 document.getElementById('result-card').classList.add('hidden');
                 return;
             }
-            // หน่วงเวลา 300ms เพื่อให้แน่ใจว่าผู้ใช้พิมพ์เสร็จหรือบาร์โค้ดวิ่งมาครบ
-            searchTimer = setTimeout(() => {
-                searchData(val);
-            }, 300);
+            searchTimer = setTimeout(() => searchData(val), 400);
         }
 
-        function formatDriveUrl(url) {
-            if (!url) return '';
-            const fileId = url.match(/[-\w]{25,}/);
-            return fileId ? `https://lh3.googleusercontent.com/d/${fileId[0]}` : url;
-        }
-
-        async function searchData(id) {
-            if(!id) return;
-            
+        async function searchData(query) {
+            if(!query) return;
             if(displayTimeout) clearTimeout(displayTimeout);
-            const resultCard = document.getElementById('result-card');
             
-            // แสดงสถานะ "กำลังค้นหา" เล็กน้อยเพื่อความลื่นไหล
+            const resultCard = document.getElementById('result-card');
             resultCard.classList.remove('hidden');
-            resultCard.innerHTML = `<div class="text-center p-4 loading-pulse text-indigo-400 font-bold">กำลังดึงข้อมูล...</div>`;
+            resultCard.innerHTML = `<div class="text-center p-4 loading-pulse text-indigo-500 font-bold"><i class="fas fa-spinner fa-spin mr-2"></i>กำลังค้นหาข้อมูล...</div>`;
 
             try {
-                const res = await fetch(`${SCRIPT_URL}?id=${id}`);
+                const res = await fetch(`${SCRIPT_URL}?id=${encodeURIComponent(query)}`);
                 const data = await res.json();
 
                 if (data) {
+                    let fileId = data.image ? data.image.match(/[-\w]{25,}/) : null;
+                    let displayImg = fileId ? `https://lh3.googleusercontent.com/d/${fileId[0]}` : 'https://via.placeholder.com/150';
+                    
                     resultCard.innerHTML = `
                         <div class="text-center animate-fade-in">
-                            <div class="relative inline-block mb-4">
-                                <img src="${formatDriveUrl(data.image)}" class="w-40 h-40 rounded-3xl mx-auto border-4 border-indigo-50 object-cover shadow-2xl" onerror="this.src='https://via.placeholder.com/150?text=No+Image'">
-                                <div class="absolute -bottom-2 -right-2 bg-green-500 text-white p-2 rounded-full shadow-lg border-2 border-white">
-                                    <i class="fas fa-check"></i>
-                                </div>
-                            </div>
+                            <img src="${displayImg}" class="w-40 h-40 rounded-3xl mx-auto border-4 border-white object-cover shadow-2xl mb-4" onerror="this.src='https://via.placeholder.com/150?text=No+Photo'">
                             <h3 class="text-2xl font-black text-gray-800 mb-1">${data.name} ${data.surname}</h3>
-                            <p class="text-indigo-600 font-bold tracking-widest text-lg mb-4">ID: ${id}</p>
-                            
-                            <div class="bg-gray-50 rounded-2xl p-4 text-left space-y-3 border border-gray-100">
-                                <div class="flex justify-between items-center">
-                                    <span class="text-gray-400 text-xs font-bold uppercase">เลขบัตรประชาชน</span>
-                                    <span class="font-mono text-gray-700 font-bold">${data.idCard}</span>
-                                </div>
+                            <div class="flex justify-center gap-2 mb-4">
+                                <span class="bg-indigo-100 text-indigo-700 px-3 py-1 rounded-full text-xs font-bold uppercase">ID: ${data.id}</span>
                             </div>
+                            <div class="bg-gray-50 rounded-2xl p-4 text-left border border-gray-100">
+                                <p class="text-gray-400 text-[10px] font-bold uppercase mb-1">เลขบัตรประชาชน</p>
+                                <p class="font-mono text-gray-700 font-bold tracking-tighter">${data.idCard}</p>
+                            </div>
+                            <p class="mt-4 text-[10px] text-red-400 font-bold">แสดงผล 10 วินาที</p>
                         </div>
                     `;
-                    
-                    // ตั้งเวลาปิด 10 วินาที
                     displayTimeout = setTimeout(() => {
                         resultCard.classList.add('hidden');
-                        document.getElementById('scan-input').value = ""; 
+                        document.getElementById('scan-input').value = "";
                     }, 10000);
-
                 } else {
-                    resultCard.innerHTML = `<div class="text-center p-4 text-red-400 font-bold">ไม่พบข้อมูลรหัส: ${id}</div>`;
-                    // ถ้าไม่พบข้อมูล ให้แสดงข้อความเตือน 3 วินาทีแล้วหายไป
-                    displayTimeout = setTimeout(() => {
-                        resultCard.classList.add('hidden');
-                    }, 3000);
+                    resultCard.innerHTML = `<div class="text-center p-4 text-red-400 font-bold"><i class="fas fa-exclamation-triangle mr-2"></i>ไม่พบข้อมูลของ "${query}"</div>`;
+                    displayTimeout = setTimeout(() => resultCard.classList.add('hidden'), 3000);
                 }
-            } catch (e) { 
+            } catch (e) {
                 resultCard.innerHTML = `<div class="text-center p-4 text-orange-400 font-bold">เกิดข้อผิดพลาดในการเชื่อมต่อ</div>`;
             }
         }
@@ -194,7 +169,6 @@
         document.getElementById('reg-form').onsubmit = async (e) => {
             e.preventDefault();
             Swal.fire({ title: 'กำลังบันทึก...', allowOutsideClick: false, didOpen: () => Swal.showLoading() });
-
             const payload = {
                 id: document.getElementById('reg-id').value,
                 name: document.getElementById('reg-name').value,
@@ -202,12 +176,11 @@
                 idCard: document.getElementById('reg-idcard').value,
                 image: base64Image
             };
-
             try {
-                const response = await fetch(SCRIPT_URL, { method: 'POST', body: JSON.stringify(payload) });
-                Swal.fire({ icon: 'success', title: 'สำเร็จ!', text: 'บันทึกข้อมูลแล้ว' }).then(() => location.reload());
+                await fetch(SCRIPT_URL, { method: 'POST', body: JSON.stringify(payload) });
+                Swal.fire({ icon: 'success', title: 'บันทึกสำเร็จ' }).then(() => location.reload());
             } catch (error) {
-                Swal.fire({ icon: 'success', title: 'สำเร็จ!', text: 'ข้อมูลถูกส่งเข้าคลาวด์แล้ว' }).then(() => location.reload());
+                Swal.fire({ icon: 'success', title: 'บันทึกสำเร็จ' }).then(() => location.reload());
             }
         };
 
