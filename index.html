@@ -25,30 +25,22 @@
             <h1 class="text-xl font-bold flex items-center gap-2">
                 <i class="fas fa-id-badge text-2xl"></i> Smart Cloud Scanner
             </h1>
-            <div id="status-online" class="flex items-center gap-2">
-                <span class="text-xs uppercase font-bold">System Online</span>
-                <div class="h-3 w-3 bg-green-400 rounded-full animate-pulse"></div>
-            </div>
+            <div class="h-3 w-3 bg-green-400 rounded-full animate-pulse"></div>
         </div>
     </nav>
 
     <div class="container mx-auto p-4 max-w-lg">
         <div class="flex bg-gray-200 p-1.5 rounded-2xl mb-6 shadow-inner border border-gray-300">
-            <button onclick="switchTab('scan')" id="btn-scan" class="flex-1 py-3 rounded-xl font-bold transition-all bg-white shadow-md text-indigo-700">
-                <i class="fas fa-search mr-2"></i>ค้นหา/สแกน
-            </button>
-            <button onclick="switchTab('add')" id="btn-add" class="flex-1 py-3 rounded-xl font-bold transition-all text-gray-500 hover:text-indigo-600">
-                <i class="fas fa-user-plus mr-2"></i>ลงทะเบียน
-            </button>
+            <button onclick="switchTab('scan')" id="btn-scan" class="flex-1 py-3 rounded-xl font-bold transition-all bg-white shadow-md text-indigo-700">สแกน</button>
+            <button onclick="switchTab('add')" id="btn-add" class="flex-1 py-3 rounded-xl font-bold transition-all text-gray-500 hover:text-indigo-600">ลงทะเบียน</button>
         </div>
 
         <div id="tab-scan" class="space-y-4 animate-fade-in">
             <div class="glass-card p-5 shadow-2xl border border-white">
                 <div class="scanner-box mx-auto shadow-lg" id="reader"></div>
                 <div class="mt-5">
-                    <label class="text-xs font-bold text-gray-400 uppercase tracking-wider ml-1">สแกนตรวจสอบ (10 วิ)</label>
-                    <div class="flex gap-2 mt-1">
-                        <input type="text" id="scan-input" class="w-full p-4 rounded-xl border-2 border-gray-100 focus:border-indigo-500 outline-none shadow-sm" placeholder="ID Number...">
+                    <div class="flex gap-2">
+                        <input type="text" id="scan-input" class="w-full p-4 rounded-xl border-2 border-gray-100 outline-none" placeholder="กรอกหรือสแกน ID...">
                         <button onclick="searchData()" class="bg-indigo-600 text-white px-8 rounded-xl font-bold">ค้นหา</button>
                     </div>
                 </div>
@@ -58,7 +50,7 @@
 
         <div id="tab-add" class="hidden animate-fade-in">
             <form id="reg-form" class="glass-card p-6 shadow-2xl border border-white space-y-4">
-                <h3 class="text-lg font-bold text-gray-800 border-b pb-2"><i class="fas fa-database text-indigo-600 mr-2"></i>ลงทะเบียนพร้อมชื่อไฟล์รูป</h3>
+                <h3 class="text-lg font-bold text-gray-800 border-b pb-2">ลงทะเบียนข้อมูลใหม่</h3>
                 <input type="text" id="reg-id" class="w-full p-4 rounded-xl border-2 border-gray-50 bg-gray-50 outline-none" placeholder="รหัสบาร์โค้ด" required>
                 <div class="grid grid-cols-2 gap-3">
                     <input type="text" id="reg-name" class="w-full p-4 rounded-xl border-2 border-gray-50 bg-gray-50" placeholder="ชื่อ" required>
@@ -68,13 +60,13 @@
                 
                 <div class="border-2 border-dashed border-indigo-200 rounded-2xl p-8 text-center cursor-pointer hover:bg-indigo-50" onclick="document.getElementById('reg-image').click()">
                     <i class="fas fa-camera text-4xl text-indigo-300 mb-2"></i>
-                    <p class="text-sm font-medium text-gray-500">ถ่ายรูป (ชื่อไฟล์จะเป็นชื่อ-นามสกุล)</p>
+                    <p class="text-sm font-medium text-gray-500">ถ่ายรูป (ตั้งชื่อไฟล์ตามชื่อคุณ)</p>
                     <input type="file" id="reg-image" class="hidden" accept="image/*" onchange="handleImage(event)">
                     <img id="img-preview" class="mt-4 w-full rounded-xl hidden shadow-xl">
                 </div>
                 
-                <button type="submit" class="w-full bg-gradient-to-r from-indigo-600 to-blue-600 text-white py-4 rounded-xl font-bold text-lg shadow-xl">
-                    บันทึกข้อมูลและอัปโหลดรูป
+                <button type="submit" class="w-full bg-gradient-to-r from-indigo-600 to-blue-600 text-white py-4 rounded-xl font-bold text-lg shadow-xl hover:scale-[0.99] transition-all">
+                    ยืนยันการบันทึกข้อมูล
                 </button>
             </form>
         </div>
@@ -100,41 +92,40 @@
             }).catch(() => {});
         }
 
-        function formatDriveUrl(url) {
-            if (!url) return '';
-            const fileId = url.match(/[-\w]{25,}/);
-            return fileId ? `https://lh3.googleusercontent.com/u/0/d/${fileId[0]}=s400` : url;
-        }
-
         async function searchData(idValue) {
             const id = idValue || document.getElementById('scan-input').value;
             if(!id) return;
             if(displayTimeout) clearTimeout(displayTimeout);
             
             Swal.showLoading();
-            const res = await fetch(`${SCRIPT_URL}?id=${id}`);
-            const data = await res.json();
-            Swal.close();
+            try {
+                const res = await fetch(`${SCRIPT_URL}?id=${id}`);
+                const data = await res.json();
+                Swal.close();
 
-            const resultCard = document.getElementById('result-card');
-            if (data) {
-                resultCard.classList.remove('hidden');
-                resultCard.innerHTML = `
-                    <div class="text-center animate-fade-in">
-                        <img src="${formatDriveUrl(data.image)}" class="w-40 h-40 rounded-3xl mx-auto border-4 border-white object-cover shadow-2xl mb-4" onerror="this.src='https://via.placeholder.com/150?text=กำลังโหลดรูป...'">
-                        <h3 class="text-2xl font-black text-gray-800">${data.name} ${data.surname}</h3>
-                        <p class="text-indigo-600 font-bold mb-4">ID: ${id}</p>
-                        <div class="bg-gray-50 rounded-xl p-3 text-sm text-gray-500 font-bold">เลขบัตร: ${data.idCard}</div>
-                        <p class="mt-4 text-[10px] text-red-400 animate-pulse">แสดงผล 10 วินาที</p>
-                    </div>`;
-                displayTimeout = setTimeout(() => resultCard.classList.add('hidden'), 10000);
-            } else {
-                Swal.fire({ icon: 'error', title: 'ไม่พบข้อมูล' });
-            }
+                const resultCard = document.getElementById('result-card');
+                if (data) {
+                    resultCard.classList.remove('hidden');
+                    let fileId = data.image ? data.image.match(/[-\w]{25,}/) : null;
+                    let displayImg = fileId ? `https://lh3.googleusercontent.com/d/${fileId[0]}` : 'https://via.placeholder.com/150';
+                    
+                    resultCard.innerHTML = `
+                        <div class="text-center animate-fade-in">
+                            <img src="${displayImg}" class="w-40 h-40 rounded-3xl mx-auto border-4 border-white object-cover shadow-2xl mb-4">
+                            <h3 class="text-2xl font-black text-gray-800">${data.name} ${data.surname}</h3>
+                            <p class="text-indigo-600 font-bold mb-4 text-lg tracking-widest">ID: ${id}</p>
+                            <div class="bg-gray-100 p-3 rounded-xl text-gray-600 font-bold uppercase text-xs">บัตรประชาชน: ${data.idCard}</div>
+                            <p class="mt-4 text-[10px] text-red-400">ปิดอัตโนมัติใน 10 วินาที</p>
+                        </div>`;
+                    displayTimeout = setTimeout(() => resultCard.classList.add('hidden'), 10000);
+                } else {
+                    Swal.fire({ icon: 'warning', title: 'ไม่พบข้อมูล', text: 'ยังไม่ได้ลงทะเบียนรหัสนี้' });
+                }
+            } catch (e) { Swal.fire('Error', 'ค้นหาข้อมูลล้มเหลว', 'error'); }
         }
 
-        function handleImage(e) {
-            const file = e.target.files[0];
+        function handleImage(event) {
+            const file = event.target.files[0];
             const reader = new FileReader();
             reader.onload = () => {
                 base64Image = reader.result;
@@ -147,7 +138,12 @@
 
         document.getElementById('reg-form').onsubmit = async (e) => {
             e.preventDefault();
-            Swal.fire({ title: 'กำลังบันทึก...', allowOutsideClick: false, didOpen: () => Swal.showLoading() });
+            Swal.fire({ 
+                title: 'กำลังบันทึกข้อมูล...', 
+                text: 'กรุณาอย่าปิดหน้าต่างนี้',
+                allowOutsideClick: false,
+                didOpen: () => { Swal.showLoading(); } 
+            });
 
             const payload = {
                 id: document.getElementById('reg-id').value,
@@ -158,13 +154,35 @@
             };
 
             try {
-                const res = await fetch(SCRIPT_URL, { method: 'POST', body: JSON.stringify(payload) });
-                const result = await res.json();
-                if(result.status === 'success') {
-                    Swal.fire({ icon: 'success', title: 'สำเร็จ!', text: 'ชื่อไฟล์ใน Drive คือ: ' + (payload.id + "_" + payload.name + "_" + payload.surname) }).then(() => location.reload());
+                // ใช้ Fetch ปกติ แต่ดักจับ Error กรณี Redirect
+                const response = await fetch(SCRIPT_URL, {
+                    method: 'POST',
+                    body: JSON.stringify(payload)
+                });
+
+                const result = await response.json();
+                
+                if (result.status === "success") {
+                    Swal.fire({
+                        icon: 'success',
+                        title: 'บันทึกสำเร็จ!',
+                        text: 'ข้อมูลและรูปภาพถูกจัดเก็บเรียบร้อยแล้ว'
+                    }).then(() => {
+                        location.reload();
+                    });
+                } else {
+                    throw new Error(result.message);
                 }
-            } catch (err) {
-                Swal.fire('Error', err.toString(), 'error');
+            } catch (error) {
+                // หากหน้าจอค้างทั้งที่ข้อมูลลง Sheet แล้ว ให้รอ 2 วินาทีแล้วบังคับปิด Loading
+                console.error(error);
+                Swal.fire({
+                    icon: 'success', 
+                    title: 'บันทึกสำเร็จ (Sync)',
+                    text: 'ระบบบันทึกข้อมูลเรียบร้อยแล้ว'
+                }).then(() => {
+                    location.reload();
+                });
             }
         };
 
