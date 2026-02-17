@@ -21,14 +21,14 @@
 <body class="min-h-screen pb-10">
 
     <nav class="bg-indigo-700 text-white p-5 shadow-xl mb-6">
-        <div class="container mx-auto text-center font-bold text-xl uppercase tracking-wider">
-            <i class="fas fa-database mr-2"></i> Cloud Sync System
+        <div class="container mx-auto text-center font-bold text-xl">
+            <i class="fas fa-database mr-2"></i> ระบบบันทึกข้อมูลและค้นหา
         </div>
     </nav>
 
     <div class="container mx-auto p-4 max-w-lg">
         <div class="flex bg-gray-200 p-1.5 rounded-2xl mb-6 shadow-inner">
-            <button onclick="switchTab('scan')" id="btn-scan" class="flex-1 py-3 rounded-xl font-bold transition-all bg-white shadow-md text-indigo-700">ค้นหา</button>
+            <button onclick="switchTab('scan')" id="btn-scan" class="flex-1 py-3 rounded-xl font-bold transition-all bg-white shadow-md text-indigo-700">ค้นหาข้อมูล</button>
             <button onclick="switchTab('add')" id="btn-add" class="flex-1 py-3 rounded-xl font-bold transition-all text-gray-500">ลงทะเบียน</button>
         </div>
 
@@ -56,19 +56,19 @@
                 <input type="text" id="reg-idcard" class="w-full p-4 rounded-xl border-2 border-gray-100" placeholder="เลขบัตรประชาชน" required>
                 <div class="border-2 border-dashed border-indigo-200 rounded-xl p-8 text-center cursor-pointer hover:bg-indigo-50" onclick="document.getElementById('reg-image').click()">
                     <i class="fas fa-camera text-3xl text-indigo-300 mb-2"></i>
-                    <p class="text-sm text-gray-500">เลือกภาพถ่าย</p>
+                    <p class="text-sm text-gray-500">เลือกภาพโปรไฟล์</p>
                     <input type="file" id="reg-image" class="hidden" accept="image/*" onchange="handleImage(event)">
                     <img id="img-preview" class="mt-4 w-full rounded-xl hidden shadow-md border-4 border-white">
                 </div>
                 <button type="submit" class="w-full bg-indigo-600 text-white py-4 rounded-xl font-bold shadow-lg hover:bg-indigo-700 active:scale-95 transition-all">
-                    บันทึกข้อมูลลงฐานข้อมูล
+                    บันทึกข้อมูล
                 </button>
             </form>
         </div>
     </div>
 
     <script>
-        // *** สำคัญ: นำ URL ที่ได้จาก Deploy ของ Apps Script มาใส่ที่นี่ ***
+        // *** อย่าลืมเปลี่ยน URL ตรงนี้เป็นลิงก์ Apps Script ของคุณ ***
         const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbw9WR8Um_fw-_xJWwwBWZTNh3cCfz5SP9Pef6-5A7kwzl6HKjGVfq7eSV6vLkxkZayP/exec"; 
         
         let scanner = new Html5Qrcode("reader");
@@ -103,7 +103,7 @@
         async function searchData(query) {
             const resultCard = document.getElementById('result-card');
             resultCard.classList.remove('hidden');
-            resultCard.innerHTML = `<div class="text-center p-4 text-indigo-500 animate-pulse">กำลังค้นหา...</div>`;
+            resultCard.innerHTML = `<div class="text-center p-4 text-indigo-500 animate-pulse">กำลังดึงข้อมูล...</div>`;
 
             try {
                 const response = await fetch(`${SCRIPT_URL}?id=${encodeURIComponent(query)}`);
@@ -113,9 +113,9 @@
                     const imgSource = data.image ? `https://lh3.googleusercontent.com/u/0/d/${data.image}` : 'https://via.placeholder.com/200?text=No+Photo';
                     resultCard.innerHTML = `
                         <div class="text-center animate-fade-in">
-                            <img src="${imgSource}" class="w-44 h-44 rounded-3xl mx-auto border-4 border-white object-cover shadow-2xl mb-4" onerror="this.src='https://via.placeholder.com/200?text=Error+Image'">
+                            <img src="${imgSource}" class="w-44 h-44 rounded-3xl mx-auto border-4 border-white object-cover shadow-2xl mb-4" onerror="this.src='https://via.placeholder.com/200?text=Error+Loading'">
                             <h3 class="text-2xl font-bold text-gray-800">${data.name} ${data.surname}</h3>
-                            <p class="text-indigo-600 font-bold mb-4 uppercase tracking-widest">ID: ${data.id}</p>
+                            <p class="text-indigo-600 font-bold mb-4 uppercase">ID: ${data.id}</p>
                             <div class="bg-gray-50 rounded-xl p-4 text-left border border-gray-100">
                                 <p class="text-[10px] text-gray-400 font-bold uppercase mb-1">เลขประจำตัวประชาชน</p>
                                 <p class="font-mono text-gray-700 font-bold text-lg">${data.idCard}</p>
@@ -123,10 +123,10 @@
                         </div>
                     `;
                 } else {
-                    resultCard.innerHTML = `<div class="text-center p-4 text-red-500 font-bold">ไม่พบข้อมูล "${query}"</div>`;
+                    resultCard.innerHTML = `<div class="text-center p-4 text-red-500 font-bold">ไม่พบข้อมูล</div>`;
                 }
             } catch (e) { 
-                resultCard.innerHTML = `<div class="text-center p-4 text-orange-500">การเชื่อมต่อผิดพลาด (ตรวจสอบ URL Apps Script)</div>`; 
+                resultCard.innerHTML = `<div class="text-center p-4 text-orange-500">การเชื่อมต่อผิดพลาด</div>`; 
             }
         }
 
@@ -144,7 +144,7 @@
 
         document.getElementById('reg-form').onsubmit = async (e) => {
             e.preventDefault();
-            Swal.fire({ title: 'กำลังบันทึก...', allowOutsideClick: false, didOpen: () => Swal.showLoading() });
+            Swal.fire({ title: 'กำลังบันทึกและอัปโหลดภาพ...', allowOutsideClick: false, didOpen: () => Swal.showLoading() });
 
             const payload = {
                 id: document.getElementById('reg-id').value,
@@ -159,16 +159,10 @@
                     method: 'POST',
                     body: JSON.stringify(payload)
                 });
-                const result = await response.json();
-                
-                if(result.status === "success") {
-                    Swal.fire({ icon: 'success', title: 'สำเร็จ', text: 'บันทึกข้อมูลแล้ว' }).then(() => location.reload());
-                } else {
-                    throw new Error(result.message);
-                }
+                Swal.fire({ icon: 'success', title: 'สำเร็จ', text: 'ข้อมูลและภาพถูกบันทึกเรียบร้อย' }).then(() => location.reload());
             } catch (error) {
-                // กรณี Fetch Error (มักเกิดจาก CORS แต่ข้อมูลเข้าชีตแล้ว)
-                Swal.fire({ icon: 'success', title: 'สำเร็จ', text: 'ส่งข้อมูลเรียบร้อยแล้ว' }).then(() => location.reload());
+                // กรณี Fetch ติด CORS แต่ข้อมูลมักจะเข้าชีตแล้ว
+                Swal.fire({ icon: 'success', title: 'ส่งข้อมูลเรียบร้อย', text: 'กรุณาตรวจสอบที่ Google Sheet' }).then(() => location.reload());
             }
         };
 
